@@ -1,0 +1,727 @@
+{
+	"info": {
+		"_postman_id": "a82fd71e-44e0-4efc-a92d-de7f9a8b3f6f",
+		"name": "Keycloak ExnetLicencias",
+		"description": "Colección para gestionar sistema de licencias en Keycloak",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "12345678"
+	},
+	"variable": [
+		{
+			"key": "keycloak_url",
+			"value": "https://keycloak.exnet.cloud",
+			"type": "string"
+		},
+		{
+			"key": "realm",
+			"value": "ExnetLicencias",
+			"type": "string"
+		},
+		{
+			"key": "admin_username",
+			"value": "admin",
+			"type": "string"
+		},
+		{
+			"key": "admin_password",
+			"value": "password",
+			"type": "string"
+		},
+		{
+			"key": "client_id",
+			"value": "admin-cli",
+			"type": "string"
+		},
+		{
+			"key": "user_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "group_premium_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "group_free_id",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "1. Autenticación",
+			"item": [
+				{
+					"name": "Obtener Token Admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var response = pm.response.json();",
+									"pm.environment.set(\"admin_token\", response.access_token);",
+									"pm.test(\"Token de administrador obtenido\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    pm.expect(response.access_token).to.not.be.undefined;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "username",
+									"value": "{{admin_username}}",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "{{admin_password}}",
+									"type": "text"
+								},
+								{
+									"key": "client_id",
+									"value": "{{client_id}}",
+									"type": "text"
+								},
+								{
+									"key": "grant_type",
+									"value": "password",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{keycloak_url}}/auth/realms/master/protocol/openid-connect/token",
+							"host": [
+								"{{keycloak_url}}"
+							],
+							"path": [
+								"auth",
+								"admin",
+								"realms",
+								"{{realm}}",
+								"users",
+								"{{user_id}}"
+							]
+						},
+						"description": "Deshabilita un usuario para revocar su licencia"
+					},
+					"response": []
+				},
+				{
+					"name": "Listar Sesiones de Usuario",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{keycloak_url}}/auth/admin/realms/{{realm}}/users/{{user_id}}/sessions",
+							"host": [
+								"{{keycloak_url}}"
+							],
+							"path": [
+								"auth",
+								"admin",
+								"realms",
+								"{{realm}}",
+								"users",
+								"{{user_id}}",
+								"sessions"
+							]
+						},
+						"description": "Lista todas las sesiones activas de un usuario"
+					},
+					"response": []
+				}
+			],
+			"description": "Operaciones para gestionar licencias de usuarios"
+		},
+		{
+			"name": "7. Client Scopes y Mappers",
+			"item": [
+				{
+					"name": "Crear Client Scope para Licencias",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"license-info\",\n    \"protocol\": \"openid-connect\",\n    \"description\": \"Información de licencia de usuario\"\n}"
+						},
+						"url": {
+							"raw": "{{keycloak_url}}/auth/admin/realms/{{realm}}/client-scopes",
+							"host": [
+								"{{keycloak_url}}"
+							],
+							"path": [
+								"auth",
+								"admin",
+								"realms",
+								"{{realm}}",
+								"client-scopes"
+							]
+						},
+						"description": "Crea un scope para incluir información de licencia en los tokens"
+					},
+					"response": []
+				},
+				{
+					"name": "Listar Client Scopes",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var response = pm.response.json();",
+									"",
+									"// Buscar el ID del scope de licencia",
+									"for (var i = 0; i < response.length; i++) {",
+									"    if (response[i].name === \"license-info\") {",
+									"        pm.environment.set(\"license_scope_id\", response[i].id);",
+									"    }",
+									"}",
+									"",
+									"pm.test(\"Client scopes listados correctamente\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    pm.expect(response).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{keycloak_url}}/auth/admin/realms/{{realm}}/client-scopes",
+							"host": [
+								"{{keycloak_url}}"
+							],
+							"path": [
+								"auth",
+								"admin",
+								"realms",
+								"{{realm}}",
+								"client-scopes"
+							]
+						},
+						"description": "Lista todos los client scopes del realm"
+					},
+					"response": []
+				},
+				{
+					"name": "Crear Mapper para licenseType",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"licenseType\",\n    \"protocol\": \"openid-connect\",\n    \"protocolMapper\": \"oidc-usermodel-attribute-mapper\",\n    \"config\": {\n        \"userinfo.token.claim\": \"true\",\n        \"user.attribute\": \"licenseType\",\n        \"id.token.claim\": \"true\",\n        \"access.token.claim\": \"true\",\n        \"claim.name\": \"licenseType\",\n        \"jsonType.label\": \"String\"\n    }\n}"
+						},
+						"url": {
+							"raw": "{{keycloak_url}}/auth/admin/realms/{{realm}}/client-scopes/{{license_scope_id}}/protocol-mappers/models",
+							"host": [
+								"{{keycloak_url}}"
+							],
+							"path": [
+								"auth",
+								"admin",
+								"realms",
+								"{{realm}}",
+								"client-scopes",
+								"{{license_scope_id}}",
+								"protocol-mappers",
+								"models"
+							]
+						},
+						"description": "Crea un mapper para incluir el tipo de licencia en los tokens"
+					},
+					"response": []
+				},
+				{
+					"name": "Crear Mapper para licenseId",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"licenseId\",\n    \"protocol\": \"openid-connect\",\n    \"protocolMapper\": \"oidc-usermodel-attribute-mapper\",\n    \"config\": {\n        \"userinfo.token.claim\": \"true\",\n        \"user.attribute\": \"licenseId\",\n        \"id.token.claim\": \"true\",\n        \"access.token.claim\": \"true\",\n        \"claim.name\": \"licenseId\",\n        \"jsonType.label\": \"String\"\n    }\n}"
+						},
+						"url": {
+							"raw": "{{keycloak_url}}/auth/admin/realms/{{realm}}/client-scopes/{{license_scope_id}}/protocol-mappers/models",
+							"host": [
+								"{{keycloak_url}}"
+							],
+							"path": [
+								"auth",
+								"admin",
+								"realms",
+								"{{realm}}",
+								"client-scopes",
+								"{{license_scope_id}}",
+								"protocol-mappers",
+								"models"
+							]
+						},
+						"description": "Crea un mapper para incluir el ID de licencia en los tokens"
+					},
+					"response": []
+				},
+				{
+					"name": "Crear Mapper para usageCount",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"usageCount\",\n    \"protocol\": \"openid-connect\",\n    \"protocolMapper\": \"oidc-usermodel-attribute-mapper\",\n    \"config\": {\n        \"userinfo.token.claim\": \"true\",\n        \"user.attribute\": \"usageCount\",\n        \"id.token.claim\": \"true\",\n        \"access.token.claim\": \"true\",\n        \"claim.name\": \"usageCount\",\n        \"jsonType.label\": \"String\"\n    }\n}"
+						},
+						"url": {
+							"raw": "{{keycloak_url}}/auth/admin/realms/{{realm}}/client-scopes/{{license_scope_id}}/protocol-mappers/models",
+							"host": [
+								"{{keycloak_url}}"
+							],
+							"path": [
+								"auth",
+								"admin",
+								"realms",
+								"{{realm}}",
+								"client-scopes",
+								"{{license_scope_id}}",
+								"protocol-mappers",
+								"models"
+							]
+						},
+						"description": "Crea un mapper para incluir el contador de uso en los tokens"
+					},
+					"response": []
+				}
+			],
+			"description": "Operaciones para configurar client scopes y mappers para incluir información de licencia en los tokens"
+		},
+		{
+			"name": "8. Gestión de Clientes",
+			"item": [
+				{
+					"name": "Crear Cliente para la Aplicación",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"clientId\": \"licencias-app\",\n    \"name\": \"Aplicación de Licencias\",\n    \"description\": \"Aplicación para gestionar licencias\",\n    \"enabled\": true,\n    \"clientAuthenticatorType\": \"client-secret\",\n    \"redirectUris\": [\n        \"https://tuaplicacion.com/*\"\n    ],\n    \"webOrigins\": [\n        \"https://tuaplicacion.com\"\n    ],\n    \"publicClient\": false,\n    \"protocol\": \"openid-connect\",\n    \"standardFlowEnabled\": true,\n    \"directAccessGrantsEnabled\": true,\n    \"serviceAccountsEnabled\": true\n}"
+						},
+						"url": {
+							"raw": "{{keycloak_url}}/auth/admin/realms/{{realm}}/clients",
+							"host": [
+								"{{keycloak_url}}"
+							],
+							"path": [
+								"auth",
+								"admin",
+								"realms",
+								"{{realm}}",
+								"clients"
+							]
+						},
+						"description": "Crea un cliente para tu aplicación"
+					},
+					"response": []
+				},
+				{
+					"name": "Listar Clientes",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var response = pm.response.json();",
+									"",
+									"// Buscar el ID del cliente",
+									"for (var i = 0; i < response.length; i++) {",
+									"    if (response[i].clientId === \"licencias-app\") {",
+									"        pm.environment.set(\"client_id\", response[i].id);",
+									"    }",
+									"}",
+									"",
+									"pm.test(\"Clientes listados correctamente\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    pm.expect(response).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{keycloak_url}}/auth/admin/realms/{{realm}}/clients",
+							"host": [
+								"{{keycloak_url}}"
+							],
+							"path": [
+								"auth",
+								"admin",
+								"realms",
+								"{{realm}}",
+								"clients"
+							]
+						},
+						"description": "Lista todos los clientes del realm"
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener Secreto del Cliente",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{keycloak_url}}/auth/admin/realms/{{realm}}/clients/{{client_id}}/client-secret",
+							"host": [
+								"{{keycloak_url}}"
+							],
+							"path": [
+								"auth",
+								"admin",
+								"realms",
+								"{{realm}}",
+								"clients",
+								"{{client_id}}",
+								"client-secret"
+							]
+						},
+						"description": "Obtiene el secreto del cliente para autenticación"
+					},
+					"response": []
+				},
+				{
+					"name": "Asignar Client Scope a Cliente",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "{{keycloak_url}}/auth/admin/realms/{{realm}}/clients/{{client_id}}/default-client-scopes/{{license_scope_id}}",
+							"host": [
+								"{{keycloak_url}}"
+							],
+							"path": [
+								"auth",
+								"admin",
+								"realms",
+								"{{realm}}",
+								"clients",
+								"{{client_id}}",
+								"default-client-scopes",
+								"{{license_scope_id}}"
+							]
+						},
+						"description": "Asigna el scope de licencia al cliente"
+					},
+					"response": []
+				}
+			],
+			"description": "Operaciones para crear y configurar clientes para tu aplicación"
+		},
+		{
+			"name": "9. Análisis y Reportes",
+			"item": [
+				{
+					"name": "Listar Usuarios de Grupo Premium",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{keycloak_url}}/auth/admin/realms/{{realm}}/groups/{{group_premium_id}}/members",
+							"host": [
+								"{{keycloak_url}}"
+							],
+							"path": [
+								"auth",
+								"admin",
+								"realms",
+								"{{realm}}",
+								"groups",
+								"{{group_premium_id}}",
+								"members"
+							]
+						},
+						"description": "Lista todos los usuarios con licencia premium"
+					},
+					"response": []
+				},
+				{
+					"name": "Listar Usuarios de Grupo Gratuito",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{keycloak_url}}/auth/admin/realms/{{realm}}/groups/{{group_free_id}}/members",
+							"host": [
+								"{{keycloak_url}}"
+							],
+							"path": [
+								"auth",
+								"admin",
+								"realms",
+								"{{realm}}",
+								"groups",
+								"{{group_free_id}}",
+								"members"
+							]
+						},
+						"description": "Lista todos los usuarios con licencia gratuita"
+					},
+					"response": []
+				},
+				{
+					"name": "Contar Usuarios por Grupo",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{keycloak_url}}/auth/admin/realms/{{realm}}/groups/{{group_premium_id}}/members?briefRepresentation=true&max=1&first=0",
+							"host": [
+								"{{keycloak_url}}"
+							],
+							"path": [
+								"auth",
+								"admin",
+								"realms",
+								"{{realm}}",
+								"groups",
+								"{{group_premium_id}}",
+								"members"
+							],
+							"query": [
+								{
+									"key": "briefRepresentation",
+									"value": "true"
+								},
+								{
+									"key": "max",
+									"value": "1"
+								},
+								{
+									"key": "first",
+									"value": "0"
+								}
+							]
+						},
+						"description": "Cuenta el número de usuarios en un grupo usando la cabecera X-Total-Count"
+					},
+					"response": []
+				},
+				{
+					"name": "Buscar Eventos de Login",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{keycloak_url}}/auth/admin/realms/{{realm}}/events?type=LOGIN",
+							"host": [
+								"{{keycloak_url}}"
+							],
+							"path": [
+								"auth",
+								"admin",
+								"realms",
+								"{{realm}}",
+								"events"
+							],
+							"query": [
+								{
+									"key": "type",
+									"value": "LOGIN"
+								}
+							]
+						},
+						"description": "Busca eventos de inicio de sesión para análisis de uso"
+					},
+					"response": []
+				}
+			],
+			"description": "Operaciones para análisis y reportes del sistema de licencias"
+		}
+	]
+}
