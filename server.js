@@ -11,7 +11,7 @@ const routes = require('./routes');
 const db = require('./database');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3344;
 
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -34,7 +34,8 @@ app.set('views', path.join(__dirname, 'views'));
 async function createDirectories() {
   const directories = [
     path.join(__dirname, 'public', 'uploads'),
-    path.join(__dirname, 'public', 'moduloStreaming')
+    path.join(__dirname, 'public', 'moduloStreaming'),
+    path.join(__dirname, 'public', 'base_source')
   ];
   
   for (const dir of directories) {
@@ -84,6 +85,18 @@ async function listModules(directory, moduleType) {
   }
 }
 
+app.get('/api/download/base_source/:filename', async (req, res) => {
+  const { filename } = req.params;
+  const filePath = path.join(__dirname, 'public', 'base_source', filename);
+
+  try {
+    await fs.access(filePath);
+    res.download(filePath);
+  } catch (error) {
+    res.status(404).json({ error: 'Archivo no encontrado' });
+  }
+});
+
 app.get('/api/modules/:moduleType', async (req, res) => {
   const { moduleType } = req.params;
   const modulePath = path.join(__dirname, 'public', moduleType);
@@ -131,6 +144,7 @@ app.get('/api/marketplace', async (req, res) => {
             description: module.description,
             version: module.version,
             price: module.price,
+            installCommand: module.install_command || null,
             downloadUrl: module.price === 'premium' ? null : `/api/download/${module.type}/${module.filename}`
           });
         }
@@ -150,13 +164,24 @@ app.get('/api/marketplace', async (req, res) => {
               const zipFiles = files.filter(file => file.endsWith('.zip'));
               
               if (zipFiles.length > 0) {
-                modulesByType[moduleType] = zipFiles.map(file => ({
-                  filename: file,
-                  name: file.replace('.zip', ''),
-                  price: 'free',
-                  version: '1.0.0',
-                  description: 'Módulo encontrado en el sistema de archivos',
-                  downloadUrl: `/api/download/${moduleType}/${file}`
+                modulesByType[moduleType] = await Promise.all(zipFiles.map(async (file) => {
+                  let installCommand = null;
+                  
+                  return new Promise((resolve) => {
+                    db.get('SELECT install_command FROM module_metadata WHERE filename = ?', [file], (err, metadata) => {
+                      const defaultCommand = `cd src/${file.replace('.zip', '')} && composer install`;
+                      
+                      resolve({
+                        filename: file,
+                        name: file.replace('.zip', ''),
+                        price: 'free',
+                        version: '1.0.0',
+                        description: 'Módulo encontrado en el sistema de archivos',
+                        installCommand: metadata ? metadata.install_command : defaultCommand,
+                        downloadUrl: `/api/download/${moduleType}/${file}`
+                      });
+                    });
+                  });
                 }));
               }
             }
@@ -171,6 +196,95 @@ app.get('/api/marketplace', async (req, res) => {
   } catch (error) {
     console.error('Error al obtener módulos del marketplace:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+app.post('/api/module-metadata', (req, res) => {
+  const { filename, installCommand } = req.body;
+  
+  if (!filename) {
+    return res.status(400).json({ error: 'El nombre del archivo es requerido' });
+  }
+  
+  db.get('SELECT * FROM module_metadata WHERE filename = ?', [filename], (err, metadata) => {
+    if (err) {
+      console.error('Error al buscar metadatos:', err);
+      return res.status(500).json({ error: 'Error interno del servidor' });
+    }
+    
+    if (metadata) {
+      db.run('UPDATE module_metadata SET install_command = ? WHERE filename = ?', 
+        [installCommand, filename], 
+        function(err) {
+          if (err) {
+            console.error('Error al actualizar metadatos:', err);
+            return res.status(500).json({ error: 'Error al actualizar metadatos' });
+          }
+          
+          res.json({ success: true, message: 'Metadatos actualizados' });
+        }
+      );
+    } else {
+      db.run('INSERT INTO module_metadata (filename, install_command) VALUES (?, ?)', 
+        [filename, installCommand], 
+        function(err) {
+          if (err) {
+            console.error('Error al insertar metadatos:', err);
+            return res.status(500).json({ error: 'Error al guardar metadatos' });
+          }
+          
+          res.json({ success: true, message: 'Metadatos guardados' });
+        }
+      );
+    }
+  });
+});
+
+app.get('/api/module-info/:moduleType/:filename', async (req, res) => {
+  const { moduleType, filename } = req.params;
+  const filePath = path.join(__dirname, 'public', moduleType, filename);
+
+  try {
+    await fs.access(filePath);
+    
+    db.get('SELECT * FROM modules WHERE filename = ? OR filename = ?', 
+      [filename, filename.replace('.zip', '') + '.zip'], 
+      (err, module) => {
+        if (err) {
+          console.error('Error al obtener información del módulo:', err);
+          return res.status(500).json({ error: 'Error interno del servidor' });
+        }
+        
+        if (module) {
+          return res.json({
+            module: {
+              id: module.id,
+              name: module.name,
+              filename: module.filename,
+              description: module.description,
+              version: module.version,
+              price: module.price,
+              installCommand: module.install_command || `cd src/${filename.replace('.zip', '')} && composer install`,
+              type: moduleType
+            }
+          });
+        }
+        
+        return res.json({
+          module: {
+            filename: filename,
+            name: filename.replace('.zip', ''),
+            description: 'Módulo disponible para descarga',
+            version: '1.0.0',
+            price: 'free',
+            installCommand: `cd src/${filename.replace('.zip', '')} && composer install`,
+            type: moduleType
+          }
+        });
+      }
+    );
+  } catch (error) {
+    res.status(404).json({ error: 'Módulo no encontrado' });
   }
 });
 

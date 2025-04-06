@@ -30,6 +30,7 @@ function initializeDatabase() {
       price TEXT DEFAULT 'free',
       description TEXT,
       version TEXT,
+      install_command TEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`);
@@ -40,6 +41,36 @@ function initializeDatabase() {
       active INTEGER DEFAULT 1,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`);
+
+    db.run(`CREATE TABLE IF NOT EXISTS module_metadata (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      filename TEXT UNIQUE,
+      install_command TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
+
+    db.run(`CREATE TABLE IF NOT EXISTS base_source (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      filename TEXT UNIQUE NOT NULL,
+      description TEXT,
+      version TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
+
+    db.all("PRAGMA table_info(modules)", (err, rows) => {
+      if (err) {
+        console.error('Error al verificar estructura de tabla:', err);
+        return;
+      }
+      
+      const hasInstallCommand = rows.some(row => row.name === 'install_command');
+      
+      if (!hasInstallCommand) {
+        console.log('Añadiendo columna install_command a la tabla modules...');
+        db.run('ALTER TABLE modules ADD COLUMN install_command TEXT');
+      }
+    });
 
     const validLicenses = ['EXNET-PIZZA-2024-001', 'EXNET-PIZZA-2024-002'];
     

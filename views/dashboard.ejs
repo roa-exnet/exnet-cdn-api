@@ -55,6 +55,14 @@
             </div>
             
             <div class="mb-3">
+              <label for="install_command" class="form-label">Comando de instalación</label>
+              <input type="text" class="form-control" id="install_command" name="install_command" placeholder="cd src/{{moduleDir}} && composer install">
+              <small class="form-text text-muted">
+                Puedes usar {{moduleDir}} para la ruta del módulo y {{projectDir}} para la raíz del proyecto.
+              </small>
+            </div>
+            
+            <div class="mb-3">
               <label for="moduleFile" class="form-label">Archivo ZIP</label>
               <input class="form-control" type="file" id="moduleFile" name="moduleFile" accept=".zip" required>
             </div>
@@ -123,6 +131,61 @@
             </table>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4 mb-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-header bg-success">
+        <h5 class="card-title mb-0"><i class="fas fa-folder-plus me-2"></i>Subir proyecto base</h5>
+      </div>
+      <div class="card-body">
+        <form action="/base-source/add" method="POST" enctype="multipart/form-data">
+          <div class="mb-3">
+            <label for="description" class="form-label">Descripción</label>
+            <textarea class="form-control" id="description" name="description" rows="2" placeholder="Descripción del proyecto base"></textarea>
+          </div>
+          
+          <div class="mb-3">
+            <label for="version" class="form-label">Versión</label>
+            <input type="text" class="form-control" id="version" name="version" placeholder="ej. 1.0.0" required>
+          </div>
+          
+          <div class="mb-3">
+            <label for="baseFile" class="form-label">Archivo ZIP (proyecto base)</label>
+            <input class="form-control" type="file" id="baseFile" name="baseFile" accept=".zip" required>
+          </div>
+          
+          <div class="d-grid">
+            <button type="submit" class="btn btn-success"><i class="fas fa-upload me-2"></i>Subir proyecto base</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4 mb-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-header bg-success">
+        <h5 class="card-title mb-0"><i class="fas fa-folder me-2"></i>Proyecto base actual</h5>
+      </div>
+      <div class="card-body">
+        <% if (baseSource) { %>
+          <p><strong>Archivo:</strong> <%= baseSource.filename %></p>
+          <p><strong>Versión:</strong> <%= baseSource.version %></p>
+          <p><strong>Descripción:</strong> <%= baseSource.description || 'Sin descripción' %></p>
+          <a href="/api/download/base_source/<%= baseSource.filename %>" class="btn btn-sm btn-outline-success">
+            <i class="fas fa-download me-2"></i>Descargar
+          </a>
+          <form action="/base-source/delete/<%= baseSource.id %>" method="POST" class="d-inline">
+            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Estás seguro de eliminar el proyecto base?')">
+              <i class="fas fa-trash-alt me-2"></i>Eliminar
+            </button>
+          </form>
+        <% } else { %>
+          <p>No hay proyecto base subido aún.</p>
+        <% } %>
       </div>
     </div>
   </div>
