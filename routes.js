@@ -8,15 +8,23 @@ const { isAuthenticated, registerUser, authenticateUser } = require('./auth');
 
 const storage = multer.diskStorage({
   destination: function(req, file, cb) {
-    const moduleType = req.body.moduleType || 'default';
+    const moduleType = req.body.type || 'default';
     const uploadPath = path.join(__dirname, 'public', moduleType);
-    
     fs.mkdir(uploadPath, { recursive: true })
       .then(() => cb(null, uploadPath))
       .catch(err => cb(err));
   },
   filename: function(req, file, cb) {
-    cb(null, file.originalname);
+    // 1) Obtener nombre y extensión por separado
+    const extension = path.extname(file.originalname);
+    const basename  = path.basename(file.originalname, extension);
+    // 2) Crear sufijo único (aquí con timestamp + aleatorio)
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    // Si prefieres UUID:
+    // const uniqueSuffix = uuidv4();
+    // 3) Formar el nuevo nombre
+    const newName = `${basename}-${uniqueSuffix}${extension}`;
+    cb(null, newName);
   }
 });
 
@@ -52,7 +60,7 @@ const baseUpload = multer({
     }
     cb(null, true);
   },
-  limits: { fileSize: 100 * 1024 * 1024 }
+  limits: { fileSize: 500 * 1024 * 1024 }
 });
 
 router.get('/', (req, res) => {
@@ -228,34 +236,6 @@ router.post('/base-source/delete/:id', isAuthenticated, (req, res) => {
   });
 });
 
-router.post('/modules/add', isAuthenticated, upload.single('moduleFile'), (req, res) => {
-  if (!req.file) {
-    req.flash('error', 'Debes subir un archivo ZIP');
-    return res.redirect('/dashboard');
-  }
-  
-  const { name, type, price, description, version } = req.body;
-  
-  if (!name || !type) {
-    req.flash('error', 'Nombre y tipo son obligatorios');
-    return res.redirect('/dashboard');
-  }
-  
-  db.run(
-    'INSERT INTO modules (name, filename, type, price, description, version) VALUES (?, ?, ?, ?, ?, ?)',
-    [name, req.file.originalname, type, price || 'free', description || '', version || '1.0.0'],
-    function(err) {
-      if (err) {
-        console.error('Error al guardar módulo:', err);
-        req.flash('error', 'Error al guardar la información del módulo');
-        return res.redirect('/dashboard');
-      }
-      
-      req.flash('success', 'Módulo añadido correctamente');
-      res.redirect('/dashboard');
-    }
-  );
-});
 
 router.post('/modules/delete/:id', isAuthenticated, (req, res) => {
   const moduleId = req.params.id;
@@ -328,7 +308,14 @@ router.post('/modules/add', isAuthenticated, upload.single('moduleFile'), (req, 
   
   db.run(
     'INSERT INTO modules (name, filename, type, price, description, version, install_command) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    [name, req.file.originalname, type, price || 'free', description || '', version || '1.0.0', install_command || null],
+    [ name,
+      req.file.filename,
+      type,
+      price || 'free',
+      description || '',
+      version || '1.0.0',
+      install_command || null
+    ],
     function(err) {
       if (err) {
         console.error('Error al guardar módulo:', err);

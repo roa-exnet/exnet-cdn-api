@@ -114,9 +114,27 @@
                       </td>
                       <td>
                         <div class="btn-group btn-group-sm" role="group">
-                          <button type="button" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Ver detalles">
+                          <!-- Ver detalles button -->
+                          <button 
+                            type="button" 
+                            class="btn btn-outline-primary view-details-btn" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#moduleDetailsModal" 
+                            data-module-id="<%= module.id %>" 
+                            title="Ver detalles">
                             <i class="fas fa-eye"></i>
                           </button>
+                          <!-- Editar button -->
+                          <button 
+                            type="button" 
+                            class="btn btn-outline-warning edit-module-btn" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#editModuleModal" 
+                            data-module-id="<%= module.id %>" 
+                            title="Editar">
+                            <i class="fas fa-edit"></i>
+                          </button>
+                          <!-- Eliminar button -->
                           <form action="/modules/delete/<%= module.id %>" method="POST" class="d-inline">
                             <button type="submit" class="btn btn-outline-danger" data-bs-toggle="tooltip" title="Eliminar" onclick="return confirm('¿Estás seguro de eliminar este módulo?')">
                               <i class="fas fa-trash-alt"></i>
@@ -230,6 +248,86 @@
       </div>
     </div>
   </div>
+
+  <div class="modal fade" id="editModuleModal" tabindex="-1" aria-labelledby="editModuleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content bg-dark text-light">
+        <div class="modal-header bg-warning">
+          <h5 class="modal-title" id="editModuleModalLabel">Editar Módulo</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="editModuleForm">
+            <input type="hidden" id="editModuleId" name="id">
+            <div class="mb-3">
+              <label for="editModuleName" class="form-label">Nombre del módulo</label>
+              <input type="text" class="form-control" id="editModuleName" name="name" required>
+            </div>
+            <div class="mb-3">
+              <label for="editModuleType" class="form-label">Tipo</label>
+              <input type="text" class="form-control" id="editModuleType" name="type" required>
+            </div>
+            <div class="mb-3">
+              <label for="editModuleVersion" class="form-label">Versión</label>
+              <input type="text" class="form-control" id="editModuleVersion" name="version">
+            </div>
+            <div class="mb-3">
+              <label for="editModulePrice" class="form-label">Precio</label>
+              <select class="form-select" id="editModulePrice" name="price">
+                <option value="free">Gratuito</option>
+                <option value="premium">Premium</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="editModuleDescription" class="form-label">Descripción</label>
+              <textarea class="form-control" id="editModuleDescription" name="description" rows="2"></textarea>
+            </div>
+            <div class="mb-3">
+              <label for="editModuleInstallCommand" class="form-label">Comando de instalación</label>
+              <input type="text" class="form-control" id="editModuleInstallCommand" name="install_command">
+            </div>
+            <div class="mb-3">
+              <label for="editModuleFilename" class="form-label">Nombre del Archivo</label>
+              <input type="text" class="form-control" id="editModuleFilename" name="filename" readonly>
+            </div>
+            <div id="editModuleError" class="text-danger" style="display: none;"></div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-warning" id="saveModuleChangesBtn">Guardar Cambios</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="moduleDetailsModal" tabindex="-1" aria-labelledby="moduleDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content bg-dark text-light">
+        <div class="modal-header bg-primary">
+          <h5 class="modal-title" id="moduleDetailsModalLabel">Detalles del Módulo</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div id="moduleDetailsContent">
+            <p><strong>Nombre:</strong> <span id="moduleName"></span></p>
+            <p><strong>Tipo:</strong> <span id="moduleType"></span></p>
+            <p><strong>Versión:</strong> <span id="moduleVersion"></span></p>
+            <p><strong>Precio:</strong> <span id="modulePrice"></span></p>
+            <p><strong>Descripción:</strong> <span id="moduleDescription"></span></p>
+            <p><strong>Comando de Instalación:</strong> <span id="moduleInstallCommand"></span></p>
+            <p><strong>Nombre del Archivo:</strong> <span id="moduleFilename"></span></p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
+
+
+
 
 <%- include('partials/footer') %>
