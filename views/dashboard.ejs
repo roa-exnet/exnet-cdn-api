@@ -1,30 +1,213 @@
 <%- include('partials/header') %>
 <%- include('partials/navbar') %>
 
-<div class="container mt-4">
-  <h1 class="mb-4">Dashboard</h1>
+<div class="container mt-4" style="padding-top: 40px;">
+  <div class="d-flex justify-content-between align-items-center mb-5">
+    <div>
+      <h1 class="h3 mb-1">Panel de Control</h1>
+      <p class="text-muted mb-0">Gestiona los módulos de tu CDN para descargas remotas</p>
+    </div>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newModuleModal">
+      <i class="fas fa-plus me-2"></i>Nuevo Módulo
+    </button>
+  </div>
   
   <% if (error && error.length > 0) { %>
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <div class="alert alert-danger mb-4" role="alert">
       <%= error %>
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
   <% } %>
   
   <% if (success && success.length > 0) { %>
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
+    <div class="alert alert-success mb-4" role="alert">
       <%= success %>
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
   <% } %>
   
-  <div class="row">
-    <div class="col-md-4 mb-4">
-      <div class="card shadow-sm h-100">
-        <div class="card-header bg-primary">
-          <h5 class="card-title mb-0"><i class="fas fa-plus-circle me-2"></i>Añadir módulo</h5>
+  <div class="row g-4 mb-5">
+    <div class="col-md-4">
+      <div class="stat-card primary card-animate">
+        <div class="icon-wrapper">
+          <i class="fas fa-box fa-2x"></i>
         </div>
-        <div class="card-body">
+        <h6>Total de Módulos</h6>
+        <div class="value"><%= modules.length %></div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="stat-card warning card-animate" style="animation-delay: 0.1s;">
+        <div class="icon-wrapper">
+          <i class="fas fa-star fa-2x"></i>
+        </div>
+        <h6>Módulos Premium</h6>
+        <div class="value"><%= modules.filter(m => m.price === 'premium').length %></div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="stat-card success card-animate" style="animation-delay: 0.2s;">
+        <div class="icon-wrapper">
+          <i class="fas fa-gift fa-2x"></i>
+        </div>
+        <h6>Módulos Gratuitos</h6>
+        <div class="value"><%= modules.filter(m => m.price !== 'premium').length %></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row dashboard-grid">
+
+    <div class="row mt-4">
+      <div class="col-md-12">
+        <div class="custom-card card-animate" style="animation-delay: 0.3s;">
+          <div class="custom-card-header">
+            <h5>
+              <div class="icon" style="color: var(--secondary-color);">
+                <i class="fas fa-list"></i>
+              </div>
+              Módulos disponibles
+            </h5>
+            <span class="badge rounded-pill" style="background: var(--surface-bg); color: var(--text-primary);">
+              <%= modules.length %> módulos
+            </span>
+          </div>
+          <div class="custom-table">
+            <table class="table table-hover mb-0">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Tipo</th>
+                  <th>Versión</th>
+                  <th>Precio</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (modules.length === 0) { %>
+                  <tr>
+                    <td colspan="5" class="text-center py-4">No hay módulos disponibles</td>
+                  </tr>
+                <% } else { %>
+                  <% modules.forEach(module => { %>
+                    <tr>
+                      <td><%= module.name %></td>
+                      <td>
+                        <span class="custom-badge" style="background: rgba(37, 99, 235, 0.1); color: var(--secondary-color);">
+                          <%= module.type %>
+                        </span>
+                      </td>
+                      <td><%= module.version || '1.0.0' %></td>
+                      <td>
+                        <% if (module.price === 'premium') { %>
+                          <span class="custom-badge premium">Premium</span>
+                        <% } else { %>
+                          <span class="custom-badge free">Gratuito</span>
+                        <% } %>
+                      </td>
+                      <td>
+                        <div class="btn-group btn-group-sm" role="group">
+                          <button 
+                            type="button" 
+                            class="btn btn-outline-primary view-details-btn" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#moduleDetailsModal" 
+                            data-module-id="<%= module.id %>" 
+                            title="Ver detalles">
+                            <i class="fas fa-eye"></i>
+                          </button>
+                          <button 
+                            type="button" 
+                            class="btn btn-outline-warning edit-module-btn" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#editModuleModal" 
+                            data-module-id="<%= module.id %>" 
+                            title="Editar">
+                            <i class="fas fa-edit"></i>
+                          </button>
+                          <form action="/modules/delete/<%= module.id %>" method="POST" class="d-inline">
+                            <button type="submit" class="btn btn-outline-danger" data-bs-toggle="tooltip" title="Eliminar" onclick="return confirm('¿Estás seguro de eliminar este módulo?')">
+                              <i class="fas fa-trash-alt"></i>
+                            </button>
+                          </form>
+                        </div>
+                      </td>
+                    </tr>
+                  <% }); %>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Proyecto base -->
+    <div class="col-md-12 mb-4">
+      <div class="custom-card card-animate">
+        <div class="custom-card-header">
+          <h5>
+            <div class="icon" style="color: var(--success-color);">
+              <i class="fas fa-folder-plus"></i>
+            </div>
+            Subir proyecto base
+          </h5>
+        </div>
+        <div class="custom-card-body">
+          <form action="/base-source/add" method="POST" enctype="multipart/form-data" class="row g-3">
+            <div class="col-md-6">
+              <label for="description" class="form-label">Descripción</label>
+              <textarea class="form-control" id="description" name="description" rows="2" placeholder="Descripción del proyecto base"></textarea>
+            </div>
+            
+            <div class="col-md-3">
+              <label for="version" class="form-label">Versión</label>
+              <input type="text" class="form-control" id="version" name="version" placeholder="ej. 1.0.0" required>
+            </div>
+            
+            <div class="col-md-3">
+              <label for="baseFile" class="form-label">Archivo ZIP (proyecto base)</label>
+              <input class="form-control" type="file" id="baseFile" name="baseFile" accept=".zip" required>
+            </div>
+            
+            <div class="col-12">
+              <button type="submit" class="btn btn-success">
+                <i class="fas fa-upload me-2"></i>Subir proyecto base
+              </button>
+            </div>
+          </form>
+          
+          <% if (baseSource) { %>
+            <div class="mt-4 pt-4 border-top">
+              <h6 class="mb-3">Proyecto base actual</h6>
+              <p><strong>Archivo:</strong> <%= baseSource.filename %></p>
+              <p><strong>Versión:</strong> <%= baseSource.version %></p>
+              <p><strong>Descripción:</strong> <%= baseSource.description || 'Sin descripción' %></p>
+              <div class="d-flex gap-2">
+                <a href="/api/download/base_source/<%= baseSource.filename %>" class="btn btn-outline-primary btn-sm">
+                  <i class="fas fa-download me-2"></i>Descargar
+                </a>
+                <form action="/base-source/delete/<%= baseSource.id %>" method="POST" class="d-inline">
+                  <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('¿Estás seguro de eliminar el proyecto base?')">
+                    <i class="fas fa-trash-alt me-2"></i>Eliminar
+                  </button>
+                </form>
+              </div>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Modal Nuevo Módulo -->
+  <div class="modal fade" id="newModuleModal" tabindex="-1" aria-labelledby="newModuleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="newModuleModalLabel">Añadir nuevo módulo</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
           <form action="/modules/add" method="POST" enctype="multipart/form-data">
             <div class="mb-3">
               <label for="name" class="form-label">Nombre del módulo</label>
@@ -43,7 +226,7 @@
             
             <div class="mb-3">
               <label for="price" class="form-label">Precio</label>
-              <select class="form-select" id="price" name="price">
+              <select class="form-control" id="price" name="price">
                 <option value="free">Gratuito</option>
                 <option value="premium">Premium</option>
               </select>
@@ -67,192 +250,23 @@
               <input class="form-control" type="file" id="moduleFile" name="moduleFile" accept=".zip" required>
             </div>
             
-            <div class="d-grid">
-              <button type="submit" class="btn btn-primary"><i class="fas fa-upload me-2"></i>Subir módulo</button>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-upload me-2"></i>Subir módulo
+              </button>
             </div>
           </form>
         </div>
       </div>
     </div>
-    
-    <!-- Lista de módulos -->
-    <div class="col-md-8 mb-4">
-      <div class="card shadow-sm h-100">
-        <div class="card-header d-flex justify-content-between align-items-center bg-primary">
-          <h5 class="card-title mb-0"><i class="fas fa-list me-2"></i>Módulos disponibles</h5>
-          <span class="badge bg-light"><%= modules.length %> módulos</span>
-        </div>
-        <div class="card-body p-0">
-          <div class="table-responsive">
-            <table class="table table-hover mb-0">
-              <thead class="bg-primary">
-                <tr>
-                  <th scope="col">Nombre</th>
-                  <th scope="col">Tipo</th>
-                  <th scope="col">Versión</th>
-                  <th scope="col">Precio</th>
-                  <th scope="col">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                <% if (modules.length === 0) { %>
-                  <tr>
-                    <td colspan="5" class="text-center py-3">No hay módulos disponibles</td>
-                  </tr>
-                <% } else { %>
-                  <% modules.forEach(module => { %>
-                    <tr>
-                      <td><%= module.name %></td>
-                      <td><span class="badge bg-secondary"><%= module.type %></span></td>
-                      <td><%= module.version || '1.0.0' %></td>
-                      <td>
-                        <% if (module.price === 'premium') { %>
-                          <span class="badge bg-warning text-dark">Premium</span>
-                        <% } else { %>
-                          <span class="badge bg-success">Gratuito</span>
-                        <% } %>
-                      </td>
-                      <td>
-                        <div class="btn-group btn-group-sm" role="group">
-                          <!-- Ver detalles button -->
-                          <button 
-                            type="button" 
-                            class="btn btn-outline-primary view-details-btn" 
-                            data-bs-toggle="modal" 
-                            data-bs-target="#moduleDetailsModal" 
-                            data-module-id="<%= module.id %>" 
-                            title="Ver detalles">
-                            <i class="fas fa-eye"></i>
-                          </button>
-                          <!-- Editar button -->
-                          <button 
-                            type="button" 
-                            class="btn btn-outline-warning edit-module-btn" 
-                            data-bs-toggle="modal" 
-                            data-bs-target="#editModuleModal" 
-                            data-module-id="<%= module.id %>" 
-                            title="Editar">
-                            <i class="fas fa-edit"></i>
-                          </button>
-                          <!-- Eliminar button -->
-                          <form action="/modules/delete/<%= module.id %>" method="POST" class="d-inline">
-                            <button type="submit" class="btn btn-outline-danger" data-bs-toggle="tooltip" title="Eliminar" onclick="return confirm('¿Estás seguro de eliminar este módulo?')">
-                              <i class="fas fa-trash-alt"></i>
-                            </button>
-                          </form>
-                        </div>
-                      </td>
-                    </tr>
-                  <% }); %>
-                <% } %>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 
-  <div class="col-md-4 mb-4">
-    <div class="card shadow-sm h-100">
-      <div class="card-header bg-success">
-        <h5 class="card-title mb-0"><i class="fas fa-folder-plus me-2"></i>Subir proyecto base</h5>
-      </div>
-      <div class="card-body">
-        <form action="/base-source/add" method="POST" enctype="multipart/form-data">
-          <div class="mb-3">
-            <label for="description" class="form-label">Descripción</label>
-            <textarea class="form-control" id="description" name="description" rows="2" placeholder="Descripción del proyecto base"></textarea>
-          </div>
-          
-          <div class="mb-3">
-            <label for="version" class="form-label">Versión</label>
-            <input type="text" class="form-control" id="version" name="version" placeholder="ej. 1.0.0" required>
-          </div>
-          
-          <div class="mb-3">
-            <label for="baseFile" class="form-label">Archivo ZIP (proyecto base)</label>
-            <input class="form-control" type="file" id="baseFile" name="baseFile" accept=".zip" required>
-          </div>
-          
-          <div class="d-grid">
-            <button type="submit" class="btn btn-success"><i class="fas fa-upload me-2"></i>Subir proyecto base</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-md-4 mb-4">
-    <div class="card shadow-sm h-100">
-      <div class="card-header bg-success">
-        <h5 class="card-title mb-0"><i class="fas fa-folder me-2"></i>Proyecto base actual</h5>
-      </div>
-      <div class="card-body">
-        <% if (baseSource) { %>
-          <p><strong>Archivo:</strong> <%= baseSource.filename %></p>
-          <p><strong>Versión:</strong> <%= baseSource.version %></p>
-          <p><strong>Descripción:</strong> <%= baseSource.description || 'Sin descripción' %></p>
-          <a href="/api/download/base_source/<%= baseSource.filename %>" class="btn btn-sm btn-outline-success">
-            <i class="fas fa-download me-2"></i>Descargar
-          </a>
-          <form action="/base-source/delete/<%= baseSource.id %>" method="POST" class="d-inline">
-            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Estás seguro de eliminar el proyecto base?')">
-              <i class="fas fa-trash-alt me-2"></i>Eliminar
-            </button>
-          </form>
-        <% } else { %>
-          <p>No hay proyecto base subido aún.</p>
-        <% } %>
-      </div>
-    </div>
-  </div>
-  
-  <div class="row mt-2">
-    <div class="col-md-12">
-      <div class="card shadow-sm">
-        <div class="card-header bg-primary">
-          <h5 class="card-title mb-0"><i class="fas fa-chart-bar me-2"></i>Estadísticas</h5>
-        </div>
-        <div class="card-body">
-          <div class="row">
-            <div class="col-md-4 mb-3">
-              <div class="card h-100 border-primary">
-                <div class="card-body text-center">
-                  <i class="fas fa-archive fa-3x text-primary mb-3"></i>
-                  <h5 class="card-title">Total de módulos</h5>
-                  <p class="card-text display-6"><%= modules.length %></p>
-                </div>
-              </div>
-            </div>
-            <div class="col-md-4 mb-3">
-              <div class="card h-100 border-warning">
-                <div class="card-body text-center">
-                  <i class="fas fa-star fa-3x text-warning mb-3"></i>
-                  <h5 class="card-title">Módulos premium</h5>
-                  <p class="card-text display-6"><%= modules.filter(m => m.price === 'premium').length %></p>
-                </div>
-              </div>
-            </div>
-            <div class="col-md-4 mb-3">
-              <div class="card h-100 border-success">
-                <div class="card-body text-center">
-                  <i class="fas fa-gift fa-3x text-success mb-3"></i>
-                  <h5 class="card-title">Módulos gratuitos</h5>
-                  <p class="card-text display-6"><%= modules.filter(m => m.price !== 'premium').length %></p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
+  <!-- Modal Editar Módulo -->
   <div class="modal fade" id="editModuleModal" tabindex="-1" aria-labelledby="editModuleModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
-      <div class="modal-content bg-dark text-light">
-        <div class="modal-header bg-warning">
+      <div class="modal-content">
+        <div class="modal-header">
           <h5 class="modal-title" id="editModuleModalLabel">Editar Módulo</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
@@ -273,7 +287,7 @@
             </div>
             <div class="mb-3">
               <label for="editModulePrice" class="form-label">Precio</label>
-              <select class="form-select" id="editModulePrice" name="price">
+              <select class="form-control" id="editModulePrice" name="price">
                 <option value="free">Gratuito</option>
                 <option value="premium">Premium</option>
               </select>
@@ -301,10 +315,11 @@
     </div>
   </div>
 
+  <!-- Modal Detalles Módulo -->
   <div class="modal fade" id="moduleDetailsModal" tabindex="-1" aria-labelledby="moduleDetailsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
-      <div class="modal-content bg-dark text-light">
-        <div class="modal-header bg-primary">
+      <div class="modal-content">
+        <div class="modal-header">
           <h5 class="modal-title" id="moduleDetailsModalLabel">Detalles del Módulo</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
@@ -326,8 +341,5 @@
     </div>
   </div>
 </div>
-
-
-
 
 <%- include('partials/footer') %>
