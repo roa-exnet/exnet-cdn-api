@@ -574,4 +574,170 @@ router.get('/check-update/:platform/:appName/:currentVersion', async (req, res) 
   }
 });
 
+
+router.get('/compare-module-versions/:moduleType/:moduleName', async (req, res) => {
+  let { moduleType, moduleName } = req.params;
+
+  try {
+
+    const modules = await new Promise((resolve, reject) => {
+      db.all(
+        'SELECT * FROM modules WHERE LOWER(name) = LOWER(?) AND type = ? ORDER BY created_at DESC',
+        [moduleName, moduleType],
+        (err, rows) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(rows);
+          }
+        }
+      );
+    });
+
+    if (!modules || modules.length === 0) {
+      return res.status(404).json({ error: 'No se encontraron versiones del módulo' });
+    }
+
+    const versionsData = modules.map(module => ({
+      id: module.id,
+      name: module.name,
+      version: module.version || '1.0.0',
+      filename: module.filename,
+      description: module.description || '',
+      created_at: module.created_at,
+      price: module.price || 'free',
+      install_command: module.install_command
+    }));
+
+    res.json({ 
+      moduleType,
+      moduleName,
+      versions: versionsData 
+    });
+  } catch (error) {
+    console.error('Error al comparar versiones del módulo:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+router.get('/marketplace', async (req, res) => {
+  try {
+    const modules = await new Promise((resolve, reject) => {
+      db.all('SELECT * FROM modules ORDER BY type, name', (err, rows) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(rows);
+        }
+      });
+    });
+
+    if (!modules || modules.length === 0) {
+      return res.json({ marketplace: {} });
+    }
+
+    const modulesByType = {};
+    const groupedModules = {};
+
+    for (const module of modules) {
+      if (!modulesByType[module.type]) {
+        modulesByType[module.type] = [];
+        groupedModules[module.type] = {};
+      }
+
+      const lowerName = module.name.toLowerCase();
+
+      if (!groupedModules[module.type][lowerName]) {
+        groupedModules[module.type][lowerName] = [];
+      }
+
+      groupedModules[module.type][lowerName].push(module);
+    }
+
+    for (const type in groupedModules) {
+      for (const name in groupedModules[type]) {
+
+        groupedModules[type][name].sort((a, b) => 
+          new Date(b.created_at) - new Date(a.created_at)
+        );
+
+        const latestModule = groupedModules[type][name][0];
+
+        modulesByType[type].push({
+          id: latestModule.id,
+          name: latestModule.name,
+          filename: latestModule.filename,
+          description: latestModule.description,
+          version: latestModule.version,
+          price: latestModule.price,
+          installCommand: latestModule.install_command || null,
+          downloadUrl: latestModule.price === 'premium' ? null : `/api/download/${latestModule.type}/${latestModule.filename}`,
+          versionCount: groupedModules[type][name].length
+        });
+      }
+    }
+
+    res.json({ marketplace: modulesByType });
+  } catch (error) {
+    console.error('Error al obtener módulos del marketplace:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+router.get('/module-versions/:moduleId', async (req, res) => {
+  const { moduleId } = req.params;
+
+  try {
+
+    const module = await new Promise((resolve, reject) => {
+      db.get('SELECT * FROM modules WHERE id = ?', [moduleId], (err, row) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(row);
+        }
+      });
+    });
+
+    if (!module) {
+      return res.status(404).json({ error: 'Módulo no encontrado' });
+    }
+
+    const versions = await new Promise((resolve, reject) => {
+      db.all(
+        'SELECT * FROM modules WHERE LOWER(name) = LOWER(?) AND type = ? ORDER BY created_at DESC',
+        [module.name, module.type],
+        (err, rows) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(rows);
+          }
+        }
+      );
+    });
+
+    res.json({
+      module: {
+        id: module.id,
+        name: module.name,
+        type: module.type
+      },
+      versions: versions.map(ver => ({
+        id: ver.id,
+        version: ver.version || '1.0.0',
+        filename: ver.filename,
+        created_at: ver.created_at,
+        price: ver.price || 'free',
+        description: ver.description || '',
+        install_command: ver.install_command || null,
+        isCurrent: ver.id === parseInt(moduleId)
+      }))
+    });
+  } catch (error) {
+    console.error('Error al obtener versiones del módulo:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
 module.exports = router;

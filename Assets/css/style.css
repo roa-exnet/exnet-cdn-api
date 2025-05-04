@@ -408,3 +408,7 @@ footer {
       text-align: center;
   }
 }
+
+.table-primary2 {
+  background-color: #334155 !important;
+}

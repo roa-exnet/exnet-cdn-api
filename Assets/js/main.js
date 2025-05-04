@@ -139,3 +139,76 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 });
+
+async function showModuleVersions(moduleId) {
+  try {
+    const response = await fetch(`/api/module-versions/${moduleId}`);
+    if (!response.ok) {
+      throw new Error('Error al obtener las versiones del módulo');
+    }
+
+    const data = await response.json();
+
+    document.getElementById('moduleVersionsTitle').textContent = `Versiones de ${data.module.name}`;
+
+    const versionsTableBody = document.getElementById('moduleVersionsTableBody');
+    versionsTableBody.innerHTML = '';
+
+    data.versions.forEach(version => {
+      const row = document.createElement('tr');
+
+      if (version.isCurrent) {
+        row.classList.add('table-primary2', 'current-version');
+      }
+
+      const createdDate = new Date(version.created_at);
+      const formattedDate = createdDate.toLocaleDateString('es-ES', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+      });
+
+      row.innerHTML = `
+        <td>${version.version}</td>
+        <td>${version.filename}</td>
+        <td>${formattedDate}</td>
+        <td>
+          <div class="btn-group btn-group-sm" role="group">
+            <button 
+              type="button" 
+              class="btn btn-outline-info view-details-btn" 
+              data-bs-toggle="modal" 
+              data-bs-target="#moduleDetailsModal" 
+              data-module-id="${version.id}" 
+              title="Ver detalles">
+              <i class="fas fa-eye"></i>
+            </button>
+            <a href="/api/download/${data.module.type}/${version.filename}" 
+               class="btn btn-outline-primary" 
+               title="Descargar">
+              <i class="fas fa-download"></i>
+            </a>
+          </div>
+        </td>
+      `;
+
+      versionsTableBody.appendChild(row);
+    });
+
+    const moduleVersionsModal = new bootstrap.Modal(document.getElementById('moduleVersionsModal'));
+    moduleVersionsModal.show();
+  } catch (error) {
+    console.error('Error:', error);
+    alert('Error al cargar las versiones del módulo');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const showVersionsButtons = document.querySelectorAll('.show-versions-btn');
+  showVersionsButtons.forEach(button => {
+    button.addEventListener('click', function() {
+      const moduleId = this.getAttribute('data-module-id');
+      showModuleVersions(moduleId);
+    });
+  });
+});

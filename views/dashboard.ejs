@@ -89,7 +89,14 @@
                 <% } else { %>
                   <% modules.forEach(module => { %>
                     <tr>
-                      <td><%= module.name %></td>
+                      <td>
+                        <%= module.name %>
+                        <% if (module.versionCount > 1) { %>
+                          <span class="badge bg-info ms-2" title="<%= module.versionCount %> versiones disponibles">
+                            <%= module.versionCount %>
+                          </span>
+                        <% } %>
+                      </td>
                       <td>
                         <span class="custom-badge" style="background: rgba(37, 99, 235, 0.1); color: var(--secondary-color);">
                           <%= module.type %>
@@ -114,6 +121,15 @@
                             title="Ver detalles">
                             <i class="fas fa-eye"></i>
                           </button>
+                          <% if (module.versionCount > 1) { %>
+                          <button 
+                            type="button" 
+                            class="btn btn-outline-info show-versions-btn" 
+                            data-module-id="<%= module.id %>" 
+                            title="Ver todas las versiones">
+                            <i class="fas fa-code-branch"></i>
+                          </button>
+                          <% } %>
                           <button 
                             type="button" 
                             class="btn btn-outline-warning edit-module-btn" 
@@ -330,6 +346,38 @@
             <p><strong>Descripción:</strong> <span id="moduleDescription"></span></p>
             <p><strong>Comando de Instalación:</strong> <span id="moduleInstallCommand"></span></p>
             <p><strong>Nombre del Archivo:</strong> <span id="moduleFilename"></span></p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Nuevo Modal de Versiones de Módulo -->
+  <div class="modal fade" id="moduleVersionsModal" tabindex="-1" aria-labelledby="moduleVersionsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="moduleVersionsTitle">Versiones del Módulo</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="custom-table">
+            <table class="table table-hover mb-0">
+              <thead>
+                <tr>
+                  <th>Versión</th>
+                  <th>Archivo</th>
+                  <th>Fecha</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="moduleVersionsTableBody">
+                <!-- Contenido dinámico -->
+              </tbody>
+            </table>
           </div>
         </div>
         <div class="modal-footer">

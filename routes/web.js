@@ -87,6 +87,34 @@ const baseUpload = multer({
   limits: { fileSize: 500 * 1024 * 1024 }
 });
 
+function groupModulesByName(modules) {
+  const groupedModules = {};
+  const result = [];
+
+  modules.forEach(module => {
+    const lowerName = module.name.toLowerCase();
+
+    if (!groupedModules[lowerName]) {
+      groupedModules[lowerName] = [];
+    }
+
+    groupedModules[lowerName].push(module);
+  });
+
+  for (const name in groupedModules) {
+
+    groupedModules[name].sort((a, b) => 
+      new Date(b.created_at) - new Date(a.created_at)
+    );
+
+    const latestModule = groupedModules[name][0];
+    latestModule.versionCount = groupedModules[name].length;
+    result.push(latestModule);
+  }
+
+  return result;
+}
+
 router.get('/', (req, res) => {
   res.render('index', { 
     title: 'CDN Admin - Inicio',
@@ -180,10 +208,37 @@ router.get('/logout', (req, res) => {
 });
 
 router.get('/dashboard', isAuthenticated, (req, res) => {
-  db.all('SELECT * FROM modules ORDER BY created_at DESC', [], (err, modules) => {
+  db.all('SELECT * FROM modules ORDER BY created_at DESC', [], (err, allModules) => {
     if (err) {
       console.error('Error al obtener módulos:', err);
       req.flash('error', 'Error al cargar los módulos');
+      allModules = [];
+    }
+
+    const groupedModules = {};
+    const modules = [];
+
+    if (allModules && allModules.length > 0) {
+      allModules.forEach(module => {
+        const lowerName = module.name.toLowerCase();
+
+        if (!groupedModules[lowerName]) {
+          groupedModules[lowerName] = [];
+        }
+
+        groupedModules[lowerName].push(module);
+      });
+
+      for (const name in groupedModules) {
+
+        groupedModules[name].sort((a, b) => 
+          new Date(b.created_at) - new Date(a.created_at)
+        );
+
+        const latestModule = groupedModules[name][0];
+        latestModule.versionCount = groupedModules[name].length;
+        modules.push(latestModule);
+      }
     }
 
     db.get('SELECT * FROM base_source ORDER BY created_at DESC LIMIT 1', [], (err, baseSource) => {
@@ -195,7 +250,7 @@ router.get('/dashboard', isAuthenticated, (req, res) => {
       res.render('dashboard', { 
         title: 'CDN Admin - Dashboard',
         user: req.session.user,
-        modules: err ? [] : modules,
+        modules: modules,
         baseSource: baseSource || null,
         error: req.flash('error'),
         success: req.flash('success')
