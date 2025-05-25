@@ -1,0 +1,780 @@
+{
+  "info": {
+    "name": "CDN Admin API",
+    "description": "Colección completa de API para el sistema CDN Admin - Panel de administración para módulos, aplicaciones y licencias",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3344",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "description": "Endpoints de autenticación y sesiones",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "username",
+                  "value": "admin",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "admin123",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["login"]
+            }
+          }
+        },
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "username",
+                  "value": "testuser",
+                  "type": "text"
+                },
+                {
+                  "key": "email",
+                  "value": "test@example.com",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "password123",
+                  "type": "text"
+                },
+                {
+                  "key": "confirmPassword",
+                  "value": "password123",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["register"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Modules",
+      "description": "Gestión de módulos del CDN",
+      "item": [
+        {
+          "name": "Get Marketplace",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/marketplace",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "marketplace"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Modules by Type",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/modules/:moduleType",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "modules", ":moduleType"],
+              "variable": [
+                {
+                  "key": "moduleType",
+                  "value": "moduloStreaming",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Module Info by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/module-info-by-id/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "module-info-by-id", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Module Info by Type and Filename",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/module-info/:moduleType/:filename",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "module-info", ":moduleType", ":filename"],
+              "variable": [
+                {
+                  "key": "moduleType",
+                  "value": "moduloStreaming",
+                  "type": "string"
+                },
+                {
+                  "key": "filename",
+                  "value": "example-module.zip",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Module Versions",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/module-versions/:moduleId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "module-versions", ":moduleId"],
+              "variable": [
+                {
+                  "key": "moduleId",
+                  "value": "1",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Compare Module Versions",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/compare-module-versions/:moduleType/:moduleName",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "compare-module-versions", ":moduleType", ":moduleName"],
+              "variable": [
+                {
+                  "key": "moduleType",
+                  "value": "moduloStreaming",
+                  "type": "string"
+                },
+                {
+                  "key": "moduleName",
+                  "value": "ExampleModule",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Module",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Module Name\",\n  \"type\": \"moduloStreaming\",\n  \"version\": \"2.0.0\",\n  \"price\": \"free\",\n  \"description\": \"Updated description\",\n  \"install_command\": \"cd src/{{moduleDir}} && composer update\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/update-module/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "update-module", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add Module (Form Data)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "name",
+                  "value": "New Module",
+                  "type": "text"
+                },
+                {
+                  "key": "type",
+                  "value": "moduloStreaming",
+                  "type": "text"
+                },
+                {
+                  "key": "version",
+                  "value": "1.0.0",
+                  "type": "text"
+                },
+                {
+                  "key": "price",
+                  "value": "free",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "Module description",
+                  "type": "text"
+                },
+                {
+                  "key": "install_command",
+                  "value": "cd src/{{moduleDir}} && composer install",
+                  "type": "text"
+                },
+                {
+                  "key": "moduleFile",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/modules/add",
+              "host": ["{{baseUrl}}"],
+              "path": ["modules", "add"]
+            }
+          }
+        },
+        {
+          "name": "Delete Module",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/modules/delete/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["modules", "delete", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Download Module",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/download/:moduleType/:filename?token=",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "download", ":moduleType", ":filename"],
+              "query": [
+                {
+                  "key": "token",
+                  "value": ""
+                }
+              ],
+              "variable": [
+                {
+                  "key": "moduleType",
+                  "value": "moduloStreaming",
+                  "type": "string"
+                },
+                {
+                  "key": "filename",
+                  "value": "example-module.zip",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Set Module Metadata",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"filename\": \"example-module.zip\",\n  \"installCommand\": \"cd src/{{moduleDir}} && composer install\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/module-metadata",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "module-metadata"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Applications",
+      "description": "Gestión de aplicaciones cliente",
+      "item": [
+        {
+          "name": "Get All Applications",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/applications",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "applications"]
+            }
+          }
+        },
+        {
+          "name": "Get Applications by Platform",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/applications/:platform",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "applications", ":platform"],
+              "variable": [
+                {
+                  "key": "platform",
+                  "value": "windows",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Application Info",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/application-info/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "application-info", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add Application",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "name",
+                  "value": "My App",
+                  "type": "text"
+                },
+                {
+                  "key": "platform",
+                  "value": "windows",
+                  "type": "text"
+                },
+                {
+                  "key": "version",
+                  "value": "1.0.0",
+                  "type": "text"
+                },
+                {
+                  "key": "changelog",
+                  "value": "Initial release",
+                  "type": "text"
+                },
+                {
+                  "key": "releaseNotes",
+                  "value": "First version of the application",
+                  "type": "text"
+                },
+                {
+                  "key": "appFile",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/applications",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "applications"]
+            }
+          }
+        },
+        {
+          "name": "Add Application (Web Form)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "name",
+                  "value": "My App",
+                  "type": "text"
+                },
+                {
+                  "key": "platform",
+                  "value": "windows",
+                  "type": "text"
+                },
+                {
+                  "key": "version",
+                  "value": "1.0.0",
+                  "type": "text"
+                },
+                {
+                  "key": "changelog",
+                  "value": "Initial release",
+                  "type": "text"
+                },
+                {
+                  "key": "releaseNotes",
+                  "value": "First version of the application",
+                  "type": "text"
+                },
+                {
+                  "key": "appFile",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/applications/add",
+              "host": ["{{baseUrl}}"],
+              "path": ["applications", "add"]
+            }
+          }
+        },
+        {
+          "name": "Delete Application (API)",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/applications/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "applications", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Application (Web)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/applications/delete/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["applications", "delete", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Download Application",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/download/applications/:filename",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "download", "applications", ":filename"],
+              "variable": [
+                {
+                  "key": "filename",
+                  "value": "my-app-1234567890.exe",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Check for Updates",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/check-update/:platform/:appName/:currentVersion",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "check-update", ":platform", ":appName", ":currentVersion"],
+              "variable": [
+                {
+                  "key": "platform",
+                  "value": "windows",
+                  "type": "string"
+                },
+                {
+                  "key": "appName",
+                  "value": "My App",
+                  "type": "string"
+                },
+                {
+                  "key": "currentVersion",
+                  "value": "1.0.0",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Base Source",
+      "description": "Gestión del proyecto base",
+      "item": [
+        {
+          "name": "Add Base Source",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "description",
+                  "value": "Base project template",
+                  "type": "text"
+                },
+                {
+                  "key": "version",
+                  "value": "1.0.0",
+                  "type": "text"
+                },
+                {
+                  "key": "baseFile",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/base-source/add",
+              "host": ["{{baseUrl}}"],
+              "path": ["base-source", "add"]
+            }
+          }
+        },
+        {
+          "name": "Delete Base Source",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/base-source/delete/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["base-source", "delete", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Download Base Source",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/download/base_source/:filename",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "download", "base_source", ":filename"],
+              "variable": [
+                {
+                  "key": "filename",
+                  "value": "base-project.zip",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Licenses",
+      "description": "Sistema de licencias para módulos premium",
+      "item": [
+        {
+          "name": "Verify License",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"license\": \"EXNET-PIZZA-2024-001\",\n  \"moduleFilename\": \"premium-module.zip\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/verify-license",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "verify-license"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Web Pages",
+      "description": "Rutas de páginas web (requieren autenticación)",
+      "item": [
+        {
+          "name": "Home Page",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": ["{{baseUrl}}"],
+              "path": [""]
+            }
+          }
+        },
+        {
+          "name": "Dashboard",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/dashboard",
+              "host": ["{{baseUrl}}"],
+              "path": ["dashboard"]
+            }
+          }
+        },
+        {
+          "name": "Applications Page",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/applications",
+              "host": ["{{baseUrl}}"],
+              "path": ["applications"]
+            }
+          }
+        },
+        {
+          "name": "Licenses Page",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/licenses",
+              "host": ["{{baseUrl}}"],
+              "path": ["licenses"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.test(\"Status code is successful\", function () {",
+          "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 302]);",
+          "});",
+          "",
+          "pm.test(\"Response time is less than 5000ms\", function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+          "});"
+        ]
+      }
+    }
+  ]
+}
